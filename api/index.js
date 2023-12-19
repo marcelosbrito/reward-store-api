@@ -7,13 +7,7 @@ import http from "http";
 import cors from "cors";
 
 const app = express();
-
-app.use(cors());
-app.use(express.json());
-app.use("/graphql");
-
 const httpServer = http.createServer(app);
-
 const typeDefs = gql`
   type Query {
     hello: String
@@ -35,8 +29,13 @@ const startApolloServer = async (app, httpServer) => {
 
   await server.start();
   expressMiddleware(server, { app });
+  app.use(
+    "/graphql",
+    cors(),
+    express.json(),
+    expressMiddleware(server, { app })
+  );
 };
 
 startApolloServer(app, httpServer);
-
 export default httpServer;
