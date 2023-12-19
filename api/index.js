@@ -44,19 +44,18 @@ import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHt
 import express from "express";
 import http from "http";
 import cors from "cors";
-import { typeDefs, resolvers } from "./schema";
 
-// const typeDefs = gql`
-//   type Query {
-//     hello: String
-//   }
-// `;
+const typeDefs = gql`
+  type Query {
+    hello: String
+  }
+`;
 
-// const resolvers = {
-//   Query: {
-//     hello: () => "world",
-//   },
-// };
+const resolvers = {
+  Query: {
+    hello: () => "world",
+  },
+};
 
 const app = express();
 const httpServer = http.createServer(app);
