@@ -5,22 +5,10 @@ import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHt
 import express from "express";
 import http from "http";
 import cors from "cors";
+import { faker } from "@faker-js/faker";
 
 const app = express();
 const httpServer = http.createServer(app);
-// const typeDefs = gql`
-//   type Query {
-//     hello: String
-//   }
-// `;
-
-// const resolvers = {
-//   Query: {
-//     hello: () => "world",
-//   },
-// };
-
-const faker = require("faker");
 
 const TOTAL_PAGES = 5;
 
@@ -115,12 +103,12 @@ const allProducts = new Array(TOTAL_PAGES).fill(1).reduce((acc) => {
   const products = baseProducts
     .map((product) => ({
       ...product,
-      id: faker.datatype.uuid(),
-      price_in_cents: faker.datatype.number({
+      id: faker.string.uuid(),
+      price_in_cents: faker.number.int({
         min: 2000,
         max: 10000,
       }),
-      sales: faker.datatype.number(40),
+      sales: faker.number.int(40),
       created_at: faker.date.past(),
     }))
     .sort(() => 0.5 - Math.random());
@@ -128,15 +116,38 @@ const allProducts = new Array(TOTAL_PAGES).fill(1).reduce((acc) => {
   return [...acc, ...products];
 }, []);
 
-module.exports = {
-  products: allProducts,
+// module.exports = {
+//   products: allProducts,
+// };
+
+const typeDefs = gql`
+  type Product {
+    name: String!
+    description: String!
+    image_url: String!
+    category: String!
+    id: ID!
+    price_in_cents: Int!
+    sales: Int!
+    created_at: String!
+  }
+  type Query {
+    allProducts: [Product]
+  }
+`;
+
+const resolvers = {
+  Query: {
+    allProducts() {
+      return allProducts;
+    },
+  },
 };
 
 const startApolloServer = async (app, httpServer) => {
   const server = new ApolloServer({
-    // typeDefs,
-    // resolvers,
-    allProducts,
+    typeDefs,
+    resolvers,
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
   });
 
