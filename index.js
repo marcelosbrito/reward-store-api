@@ -1,14 +1,7 @@
-import { ApolloServer } from "@apollo/server";
-import gql from "graphql-tag";
-import { expressMiddleware } from "@apollo/server/express4";
-import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
-import express from "express";
-import http from "http";
-import cors from "cors";
-import { faker } from "@faker-js/faker";
-
-const app = express();
-const httpServer = http.createServer(app);
+const express = require("express");
+const { createHandler } = require("graphql-http/lib/use/express");
+const { buildSchema } = require("graphql");
+const faker = require("faker");
 
 const TOTAL_PAGES = 5;
 
@@ -103,12 +96,12 @@ const allProducts = new Array(TOTAL_PAGES).fill(1).reduce((acc) => {
   const products = baseProducts
     .map((product) => ({
       ...product,
-      id: faker.string.uuid(),
-      price_in_cents: faker.number.int({
+      id: faker.datatype.uuid(),
+      price_in_cents: faker.datatype.number({
         min: 2000,
         max: 10000,
       }),
-      sales: faker.number.int(40),
+      sales: faker.datatype.number(40),
       created_at: faker.date.past(),
     }))
     .sort(() => 0.5 - Math.random());
@@ -116,50 +109,41 @@ const allProducts = new Array(TOTAL_PAGES).fill(1).reduce((acc) => {
   return [...acc, ...products];
 }, []);
 
-// module.exports = {
-//   products: allProducts,
-// };
-
-const typeDefs = gql`
+const schema = buildSchema(`
   type Product {
+    id: ID!
     name: String!
     description: String!
     image_url: String!
     category: String!
-    id: ID!
     price_in_cents: Int!
     sales: Int!
     created_at: String!
   }
+
   type Query {
-    allProducts: [Product]
+    products: [Product!]!
   }
-`;
+`);
 
-const resolvers = {
-  Query: {
-    allProducts() {
-      return allProducts;
-    },
-  },
+const root = {
+  products: () => allProducts,
 };
 
-const startApolloServer = async (app, httpServer) => {
-  const server = new ApolloServer({
-    typeDefs,
-    resolvers,
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
-  });
+const app = express();
 
-  await server.start();
-  expressMiddleware(server, { app });
-  app.use(
-    "/graphql",
-    cors(),
-    express.json(),
-    expressMiddleware(server, { app })
+app.use(
+  "/graphql",
+  createHandler({
+    schema: schema,
+    rootValue: root,
+    graphiql: true,
+  })
+);
+
+const port = process.env.PORT || 4000;
+app.listen(port, () => {
+  console.log(
+    `Running a GraphQL API server at http://localhost:${port}/graphql`
   );
-};
-
-startApolloServer(app, httpServer);
-export default httpServer;
+});
