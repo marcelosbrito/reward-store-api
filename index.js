@@ -1,6 +1,7 @@
 const express = require("express");
 const { createHandler } = require("graphql-http/lib/use/express");
 const { buildSchema } = require("graphql");
+const cors = require("cors");
 const faker = require("faker");
 
 const TOTAL_PAGES = 5;
@@ -131,6 +132,9 @@ const root = {
 };
 
 const app = express();
+
+// Enable CORS for all routes
+app.use(cors());
 
 app.use(
   "/graphql",
